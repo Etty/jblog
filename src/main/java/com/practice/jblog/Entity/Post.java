@@ -1,0 +1,133 @@
+package com.practice.jblog.Entity;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.Instant;
+import java.util.Set;
+
+@Entity
+@Table(indexes = {
+        @Index(name = "POST_TITLE", columnList = "title")
+})
+public class Post {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ColumnDefault("1")
+    private short isEnabled;
+
+    @Column(unique = true, updatable = false)
+    private String postIdentifier;
+
+    @NotBlank(message = "Post title cannot be blank")
+    private String title;
+
+    private String image;
+
+    @Lob
+    private String description;
+
+    @Column(unique = true)
+    private String urlKey;
+
+    @ManyToMany
+    @JoinTable(
+            name = "category_post",
+            joinColumns = @JoinColumn(name = "post_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id"))
+    private Set<Category> categories;
+
+    @JsonFormat(pattern = "yyyy-mm-dd")
+    @CreationTimestamp
+    private Instant createdAt;
+
+    @JsonFormat(pattern = "yyyy-mm-dd")
+    @UpdateTimestamp
+    private Instant updatedAt;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public short getIsEnabled() {
+        return isEnabled;
+    }
+
+    public void setIsEnabled(short isEnabled) {
+        this.isEnabled = isEnabled;
+    }
+
+    public String getPostIdentifier() {
+        return postIdentifier;
+    }
+
+    public void setPostIdentifier(String postIdentifier) {
+        this.postIdentifier = postIdentifier;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getUrlKey() {
+        return urlKey;
+    }
+
+    public void setUrlKey(String urlKey) {
+        this.urlKey = urlKey;
+    }
+
+    public Set<Category> getCategories() {
+        return categories;
+    }
+
+    public void setCategories(Set<Category> categories) {
+        this.categories = categories;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Instant updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+}
