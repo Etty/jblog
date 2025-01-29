@@ -1,6 +1,7 @@
 package com.practice.jblog.Entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import org.hibernate.annotations.ColumnDefault;
@@ -8,19 +9,22 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(indexes = {
         @Index(name = "POST_TITLE", columnList = "title")
 })
-public class Post {
+public class Post implements SearchableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ColumnDefault("1")
-    private short isEnabled;
+    private byte isEnabled;
 
     @Column(unique = true, updatable = false)
     private String postIdentifier;
@@ -41,6 +45,7 @@ public class Post {
             name = "category_post",
             joinColumns = @JoinColumn(name = "post_id"),
             inverseJoinColumns = @JoinColumn(name = "category_id"))
+    @JsonIgnore
     private Set<Category> categories;
 
     @JsonFormat(pattern = "yyyy-mm-dd")
@@ -51,6 +56,9 @@ public class Post {
     @UpdateTimestamp
     private Instant updatedAt;
 
+    @Transient
+    List<String> categoryIds = null;
+
     public Long getId() {
         return id;
     }
@@ -59,11 +67,11 @@ public class Post {
         this.id = id;
     }
 
-    public short getIsEnabled() {
+    public byte getIsEnabled() {
         return isEnabled;
     }
 
-    public void setIsEnabled(short isEnabled) {
+    public void setIsEnabled(byte isEnabled) {
         this.isEnabled = isEnabled;
     }
 
@@ -111,6 +119,19 @@ public class Post {
         return categories;
     }
 
+    public List<String> getCategoryIds() {
+        if (categoryIds != null) {return categoryIds;}
+
+        if (categories == null || categories.isEmpty()) {
+            return List.of();
+        }
+        categoryIds = categories.stream()
+                .map(Category::getCategoryIdentifier)
+                .collect(Collectors.toList());
+
+        return categoryIds;
+    }
+
     public void setCategories(Set<Category> categories) {
         this.categories = categories;
     }
@@ -129,5 +150,11 @@ public class Post {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    @Override
+    @JsonIgnore
+    public String getIdField() {
+        return postIdentifier;
     }
 }

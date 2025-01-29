@@ -21,7 +21,7 @@ public class Category {
     private Long id;
 
     @ColumnDefault("1")
-    private short isEnabled;
+    private byte isEnabled;
 
     @Column(unique = true, updatable = false)
     private String categoryIdentifier;
@@ -64,11 +64,11 @@ public class Category {
         this.id = id;
     }
 
-    public short getIsEnabled() {
+    public byte getIsEnabled() {
         return isEnabled;
     }
 
-    public void setIsEnabled(short isEnabled) {
+    public void setIsEnabled(byte isEnabled) {
         this.isEnabled = isEnabled;
     }
 

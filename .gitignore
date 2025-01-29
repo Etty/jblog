@@ -34,3 +34,6 @@ build/
 
 ### Config ###
 /src/main/resources/env.properties
+
+### Log Files ###
+/jblog.log
