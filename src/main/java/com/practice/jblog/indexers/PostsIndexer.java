@@ -3,7 +3,7 @@ package com.practice.jblog.indexers;
 import com.practice.jblog.Entity.Post;
 import com.practice.jblog.Entity.PostAttributeDefinition;
 import com.practice.jblog.Repository.PostRepository;
-import com.practice.jblog.config.IndexPrefixResolver;
+import com.practice.jblog.config.IndexPrefix;
 import com.practice.jblog.adapters.ElasticAdapter;
 import com.practice.jblog.service.PostAttributesService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +16,7 @@ import java.util.Optional;
 @Component
 public class PostsIndexer implements Indexer {
     @Autowired
-    private IndexPrefixResolver indexPrefixResolver;
+    private IndexPrefix indexPrefix;
 
     @Autowired
     private ElasticAdapter<Post, PostAttributeDefinition> elasticAdapter;
@@ -57,7 +57,7 @@ public class PostsIndexer implements Indexer {
     }
 
     public String getIndexName() {
-        return indexPrefixResolver.getPrefix() + "posts";
+        return indexPrefix.getPrefix() + "posts";
     }
 
     private List<PostAttributeDefinition> prepareAttributes() {

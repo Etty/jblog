@@ -2,7 +2,10 @@ package com.practice.jblog.adapters;
 
 import com.practice.jblog.Entity.SearchableAttribute;
 import com.practice.jblog.Entity.SearchableEntity;
-import com.practice.jblog.dto.SearchResult;
+import com.practice.jblog.dto.search.FilterRequest;
+import com.practice.jblog.dto.search.SearchFilteredRequest;
+import com.practice.jblog.dto.search.SearchRequest;
+import com.practice.jblog.dto.search.SearchResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
@@ -19,25 +22,9 @@ public interface SearchAdapter<T extends SearchableEntity, A extends SearchableA
     @Transactional
     void reindexOne(String indexName, T entity) throws IOException;
 
-    SearchResult<T> search(String query,
-                           int pageNumber,
-                           Map<String, String> mustConditions,
-                           Map<String, Integer> fields,
-                           String indexName,
-                           Class<T> searchEntityType) throws IOException;
+    SearchResult<T> search(SearchRequest request) throws IOException;
 
-    SearchResult<T> filter(Map<String, List<String>> filters,
-                           int pageNumber,
-                           Map<String, String> mustConditions,
-                           Map<String, String> sortOptions,
-                           String indexName,
-                           Class<T> searchEntityType) throws IOException;
+    SearchResult<T> filter(FilterRequest request) throws IOException;
 
-    SearchResult<T> searchFiltered(String query,
-                                   int pageNumber,
-                                   Map<String, List<String>> filters,
-                                   Map<String, String> mustConditions,
-                                   Map<String, Integer> fields,
-                                   String indexName,
-                                   Class<T> searchEntityType) throws IOException;
+    SearchResult<T> searchFiltered(SearchFilteredRequest request) throws IOException;
 }

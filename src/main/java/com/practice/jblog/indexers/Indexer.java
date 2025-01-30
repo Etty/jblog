@@ -18,4 +18,6 @@ public interface Indexer {
      * Update single entity in the index
      */
     void reindexOne(Long entityId) throws IOException;
+
+    String getIndexName();
 }

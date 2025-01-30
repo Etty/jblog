@@ -1,4 +1,4 @@
-package com.practice.jblog.dto;
+package com.practice.jblog.dto.search;
 
 import com.practice.jblog.Entity.SearchableEntity;
 

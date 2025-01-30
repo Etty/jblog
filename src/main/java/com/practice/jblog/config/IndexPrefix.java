@@ -1,11 +1,10 @@
 package com.practice.jblog.config;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class IndexPrefixResolver {
+public class IndexPrefix {
     @Value("${elastic.index_prefix}")
     private String posts_index_name;
 

@@ -19,7 +19,10 @@ import co.elastic.clients.transport.endpoints.BooleanResponse;
 import com.practice.jblog.Entity.SearchableAttribute;
 import com.practice.jblog.Entity.SearchableEntity;
 
-import com.practice.jblog.dto.SearchResult;
+import com.practice.jblog.dto.search.FilterRequest;
+import com.practice.jblog.dto.search.SearchFilteredRequest;
+import com.practice.jblog.dto.search.SearchRequest;
+import com.practice.jblog.dto.search.SearchResult;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -36,7 +39,6 @@ public class ElasticAdapter<T extends SearchableEntity, A extends SearchableAttr
 
     @Autowired
     private ElasticsearchClient elasticsearchClient;
-    private TermsQueryField.Builder tqf;
 
     public void addIndex(String indexName) throws IOException {
         boolean indexExists = indexExists(indexName);
@@ -101,30 +103,27 @@ public class ElasticAdapter<T extends SearchableEntity, A extends SearchableAttr
     }
 
     @Override
-    public SearchResult<T> search(String query,
-                                  int pageNumber,
-                                  Map<String, String> mustConditions,
-                                  Map<String, Integer> fields,
-                                  String indexName,
-                                  Class<T> searchEntityType) throws IOException {
+    public SearchResult<T> search(SearchRequest request) throws IOException {
 
         List<Query> musts = new ArrayList<>();
-        this.addMustConditions(musts, mustConditions);
+        this.addMustConditions(musts, request.getMustConditions());
 
         List<String> searchFields = new ArrayList<>();
         Map<String, HighlightField> highlightFields = new HashMap<>();
-        fields.forEach((field, priority) -> {
+        request.getSearchFields().forEach((field, priority) -> {
             searchFields.add(field + "^" + priority);
             highlightFields.put(field, HighlightField.of(hf -> hf.numberOfFragments(3)));
         });
 
         SearchResponse<T> result = elasticsearchClient.search(s -> s
-                        .index(indexName)
+                        .index(request.getIndexName())
                         .query(q -> q
                                 .bool(b -> {
                                             b.must(musts);
                                             b.should(ss -> ss.
-                                                    multiMatch(m -> m.query(query).fields(searchFields))
+                                                    multiMatch(m -> m.query(
+                                                            request.getQuery()).fields(searchFields)
+                                                    )
                                             );
                                             return b;
                                         }
@@ -132,30 +131,25 @@ public class ElasticAdapter<T extends SearchableEntity, A extends SearchableAttr
                         )
                         .highlight(Highlight.of(h -> h.type(HighlighterType.Unified)
                                 .fields(highlightFields)))
-                        .from(pageNumber),
-                searchEntityType
+                        .from(request.getPageNumber()),
+                request.getSearchEntityType()
         );
 
-        return retrieveResults(result, query);
+        return retrieveResults(result, request.getQuery());
     }
 
     @Override
-    public SearchResult<T> filter(Map<String, List<String>> filters,
-                                  int pageNumber,
-                                  Map<String, String> mustConditions,
-                                  Map<String, String> sortOptions,
-                                  String indexName,
-                                  Class<T> searchEntityType) throws IOException {
+    public SearchResult<T> filter(FilterRequest request) throws IOException {
 
         List<Query> criterias = new ArrayList<>();
-        addFilterConditions(criterias, filters);
-        addMustConditions(criterias, mustConditions);
+        addFilterConditions(criterias, request.getFilters());
+        addMustConditions(criterias, request.getMustConditions());
 
-        List<SortOptions> soList = buildSortOptions(sortOptions);
+        List<SortOptions> soList = buildSortOptions(request.getSortOptions());
 
         SearchResponse<T> result = elasticsearchClient.search(s ->
                         s
-                                .index(indexName)
+                                .index(request.getIndexName())
                                 .query(q -> q
                                         .bool(b -> {
                                                     b.must(criterias);
@@ -164,41 +158,37 @@ public class ElasticAdapter<T extends SearchableEntity, A extends SearchableAttr
                                         )
                                 )
                                 .sort(soList)
-                                .from(pageNumber),
-                searchEntityType
+                                .from(request.getPageNumber()),
+                request.getSearchEntityType()
         );
 
         return retrieveResults(result, null);
     }
 
     @Override
-    public SearchResult<T> searchFiltered(String query,
-                                          int pageNumber,
-                                          Map<String, List<String>> filters,
-                                          Map<String, String> mustConditions,
-                                          Map<String, Integer> fields,
-                                          String indexName,
-                                          Class<T> searchEntityType) throws IOException {
+    public SearchResult<T> searchFiltered(SearchFilteredRequest request) throws IOException {
 
         List<Query> musts = new ArrayList<>();
-        addMustConditions(musts, mustConditions);
-        addFilterConditions(musts, filters);
+        addMustConditions(musts, request.getMustConditions());
+        addFilterConditions(musts, request.getFilters());
 
         List<String> searchFields = new ArrayList<>();
         Map<String, HighlightField> highlightFields = new HashMap<>();
-        fields.forEach((field, priority) -> {
+        request.getSearchFields().forEach((field, priority) -> {
             searchFields.add(field + "^" + priority);
             highlightFields.put(field, HighlightField.of(hf -> hf.numberOfFragments(3)));
         });
 
 
         SearchResponse<T> result = elasticsearchClient.search(s -> s
-                        .index(indexName)
+                        .index(request.getIndexName())
                         .query(q -> q
                                 .bool(b -> {
                                             b.must(musts);
                                             b.should(ss -> ss.
-                                                    multiMatch(m -> m.query(query).fields(searchFields))
+                                                    multiMatch(m
+                                                            -> m.query(request.getQuery()).fields(searchFields)
+                                                    )
                                             );
                                             return b;
                                         }
@@ -206,11 +196,11 @@ public class ElasticAdapter<T extends SearchableEntity, A extends SearchableAttr
                         )
                         .highlight(Highlight.of(h -> h.type(HighlighterType.Unified)
                                 .fields(highlightFields)))
-                        .from(pageNumber),
-                searchEntityType
+                        .from(request.getPageNumber()),
+                request.getSearchEntityType()
         );
 
-        return retrieveResults(result, query);
+        return retrieveResults(result, request.getQuery());
     }
 
     private void addMustConditions(List<Query> conds, Map<String, String> mustConditions) {

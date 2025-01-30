@@ -3,7 +3,10 @@ package com.practice.jblog.service;
 import com.practice.jblog.Entity.Post;
 import com.practice.jblog.Entity.PostAttributeDefinition;
 import com.practice.jblog.adapters.ElasticAdapter;
-import com.practice.jblog.dto.SearchResult;
+import com.practice.jblog.dto.search.FilterRequest;
+import com.practice.jblog.dto.search.SearchFilteredRequest;
+import com.practice.jblog.dto.search.SearchRequest;
+import com.practice.jblog.dto.search.SearchResult;
 import com.practice.jblog.indexers.PostsIndexer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,35 +27,146 @@ public class ElasticSearcher {
     @Autowired
     private PostAttributesService postAttributesService;
 
-    public SearchResult<Post> search(String query) throws IOException {
+    public SearchResult<Post> search(String query, int pageNum) throws IOException {
         HashMap<String, String> musts = new HashMap<>();
         musts.put("isEnabled", "1");
         HashMap<String, Integer> fields = new HashMap<>();
         List<PostAttributeDefinition> searchableAttrs = postAttributesService.getSearchableAttributes();
-        for (PostAttributeDefinition attr: searchableAttrs) {
+        for (PostAttributeDefinition attr : searchableAttrs) {
             fields.put(attr.getCode(), attr.getSearchWeight());
         }
-        return elasticAdapter.search(query, 0, musts, fields, postsIndexer.getIndexName(), Post.class);
+
+        return elasticAdapter.search(new SearchRequest() {
+            @Override
+            public String getQuery() {
+                return query;
+            }
+
+            @Override
+            public int getPageNumber() {
+                return pageNum;
+            }
+
+            @Override
+            public Map<String, String> getMustConditions() {
+                return musts;
+            }
+
+            @Override
+            public Map<String, Integer> getSearchFields() {
+                return fields;
+            }
+
+            @Override
+            public String getIndexName() {
+                return postsIndexer.getIndexName();
+            }
+
+            @Override
+            public Class<Post> getSearchEntityType() {
+                return Post.class;
+            }
+        });
     }
 
-    public SearchResult<Post> filter(Map<String, List<String>> filters) throws IOException {
+    public SearchResult<Post> search(String query) throws IOException {
+        return search(query, 0);
+    }
+
+    public SearchResult<Post> filter(Map<String, List<String>> filters, int pageNum) throws IOException {
         HashMap<String, String> musts = new HashMap<>();
         musts.put("isEnabled", "1");
         HashMap<String, String> so = new HashMap<>();
         so.put("id", "desc");
 
-        return elasticAdapter.filter(filters, 0, musts, so, postsIndexer.getIndexName(), Post.class);
+        return elasticAdapter.filter(new FilterRequest() {
+            @Override
+            public Map<String, List<String>> getFilters() {
+                return filters;
+            }
+
+            @Override
+            public int getPageNumber() {
+                return pageNum;
+            }
+
+            @Override
+            public Map<String, String> getMustConditions() {
+                return musts;
+            }
+
+            @Override
+            public Map<String, String> getSortOptions() {
+                return so;
+            }
+
+            @Override
+            public String getIndexName() {
+                return postsIndexer.getIndexName();
+            }
+
+            @Override
+            public Class<Post> getSearchEntityType() {
+                return Post.class;
+            }
+        });
     }
 
-    public SearchResult<Post> searchFiltered(String query, Map<String, List<String>> filters) throws IOException {
+    public SearchResult<Post> filter(Map<String, List<String>> filters) throws IOException {
+        return filter(filters, 0);
+    }
+
+    public SearchResult<Post> searchFiltered(String query, Map<String,
+                                                     List<String>> filters,
+                                             int pageNum) throws IOException {
+
         HashMap<String, String> musts = new HashMap<>();
         musts.put("isEnabled", "1");
         HashMap<String, Integer> fields = new HashMap<>();
         List<PostAttributeDefinition> searchableAttrs = postAttributesService.getSearchableAttributes();
-        for (PostAttributeDefinition attr: searchableAttrs) {
+        for (PostAttributeDefinition attr : searchableAttrs) {
             fields.put(attr.getCode(), attr.getSearchWeight());
         }
 
-        return elasticAdapter.searchFiltered(query, 0, filters, musts, fields, postsIndexer.getIndexName(), Post.class);
+        return elasticAdapter.searchFiltered(new SearchFilteredRequest() {
+            @Override
+            public Map<String, List<String>> getFilters() {
+                return filters;
+            }
+
+            @Override
+            public String getQuery() {
+                return query;
+            }
+
+            @Override
+            public int getPageNumber() {
+                return pageNum;
+            }
+
+            @Override
+            public Map<String, String> getMustConditions() {
+                return musts;
+            }
+
+            @Override
+            public Map<String, Integer> getSearchFields() {
+                return fields;
+            }
+
+            @Override
+            public String getIndexName() {
+                return postsIndexer.getIndexName();
+            }
+
+            @Override
+            public Class<Post> getSearchEntityType() {
+                return Post.class;
+            }
+        });
+    }
+
+    public SearchResult<Post> searchFiltered(String query, Map<String, List<String>> filters) throws IOException {
+        return searchFiltered(query, filters, 0);
     }
 }
