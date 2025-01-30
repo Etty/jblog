@@ -50,10 +50,12 @@ public class Category {
 
     @JsonFormat(pattern = "yyyy-mm-dd")
     @CreationTimestamp
+    @Column(columnDefinition="TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private Instant createdAt;
 
     @JsonFormat(pattern = "yyyy-mm-dd")
     @UpdateTimestamp
+    @Column(columnDefinition="TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
     private Instant updatedAt;
 
     public Long getId() {
