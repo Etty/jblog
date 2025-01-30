@@ -2,6 +2,7 @@ package com.practice.jblog.adapters;
 
 import com.practice.jblog.Entity.SearchableAttribute;
 import com.practice.jblog.Entity.SearchableEntity;
+import com.practice.jblog.dto.SearchResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
@@ -18,23 +19,25 @@ public interface SearchAdapter<T extends SearchableEntity, A extends SearchableA
     @Transactional
     void reindexOne(String indexName, T entity) throws IOException;
 
-    List<T> search(String query,
-                   Map<String, String> mustConditions,
-                   Map<String, Integer> fields,
-                   String indexName,
-                   Class<T> searchEntityType) throws IOException;
-
-    List<T> filter(Map<String, List<String>> filters,
-                   Map<String, String> mustConditions,
-                   Map<String, String> sortOptions,
-                   String indexName,
-                   Class<T> searchEntityType) throws IOException;
-
-    List<T> searchFiltered(String query,
-                           Map<String, List<String>> filters,
+    SearchResult<T> search(String query,
+                           int pageNumber,
                            Map<String, String> mustConditions,
                            Map<String, Integer> fields,
+                           String indexName,
+                           Class<T> searchEntityType) throws IOException;
+
+    SearchResult<T> filter(Map<String, List<String>> filters,
+                           int pageNumber,
+                           Map<String, String> mustConditions,
                            Map<String, String> sortOptions,
                            String indexName,
                            Class<T> searchEntityType) throws IOException;
+
+    SearchResult<T> searchFiltered(String query,
+                                   int pageNumber,
+                                   Map<String, List<String>> filters,
+                                   Map<String, String> mustConditions,
+                                   Map<String, Integer> fields,
+                                   String indexName,
+                                   Class<T> searchEntityType) throws IOException;
 }

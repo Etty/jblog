@@ -3,6 +3,7 @@ package com.practice.jblog.service;
 import com.practice.jblog.Entity.Post;
 import com.practice.jblog.Entity.PostAttributeDefinition;
 import com.practice.jblog.adapters.ElasticAdapter;
+import com.practice.jblog.dto.SearchResult;
 import com.practice.jblog.indexers.PostsIndexer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,7 +24,7 @@ public class ElasticSearcher {
     @Autowired
     private PostAttributesService postAttributesService;
 
-    public List<Post> search(String query) throws IOException {
+    public SearchResult<Post> search(String query) throws IOException {
         HashMap<String, String> musts = new HashMap<>();
         musts.put("isEnabled", "1");
         HashMap<String, Integer> fields = new HashMap<>();
@@ -31,19 +32,19 @@ public class ElasticSearcher {
         for (PostAttributeDefinition attr: searchableAttrs) {
             fields.put(attr.getCode(), attr.getSearchWeight());
         }
-        return elasticAdapter.search(query, musts, fields, postsIndexer.getIndexName(), Post.class);
+        return elasticAdapter.search(query, 0, musts, fields, postsIndexer.getIndexName(), Post.class);
     }
 
-    public List<Post> filter(Map<String, List<String>> filters) throws IOException {
+    public SearchResult<Post> filter(Map<String, List<String>> filters) throws IOException {
         HashMap<String, String> musts = new HashMap<>();
         musts.put("isEnabled", "1");
         HashMap<String, String> so = new HashMap<>();
         so.put("id", "desc");
 
-        return elasticAdapter.filter(filters, musts, so, postsIndexer.getIndexName(), Post.class);
+        return elasticAdapter.filter(filters, 0, musts, so, postsIndexer.getIndexName(), Post.class);
     }
 
-    public List<Post> searchFiltered(String query, Map<String, List<String>> filters) throws IOException {
+    public SearchResult<Post> searchFiltered(String query, Map<String, List<String>> filters) throws IOException {
         HashMap<String, String> musts = new HashMap<>();
         musts.put("isEnabled", "1");
         HashMap<String, Integer> fields = new HashMap<>();
@@ -51,9 +52,7 @@ public class ElasticSearcher {
         for (PostAttributeDefinition attr: searchableAttrs) {
             fields.put(attr.getCode(), attr.getSearchWeight());
         }
-        HashMap<String, String> so = new HashMap<>();
-        so.put("id", "desc");
 
-        return elasticAdapter.searchFiltered(query, filters, musts, fields, so, postsIndexer.getIndexName(), Post.class);
+        return elasticAdapter.searchFiltered(query, 0, filters, musts, fields, postsIndexer.getIndexName(), Post.class);
     }
 }

@@ -12,16 +12,22 @@ import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Highlight;
+import co.elastic.clients.elasticsearch.core.search.HighlightField;
+import co.elastic.clients.elasticsearch.core.search.HighlighterType;
 import co.elastic.clients.transport.endpoints.BooleanResponse;
 import com.practice.jblog.Entity.SearchableAttribute;
 import com.practice.jblog.Entity.SearchableEntity;
 
+import com.practice.jblog.dto.SearchResult;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Service
@@ -95,17 +101,22 @@ public class ElasticAdapter<T extends SearchableEntity, A extends SearchableAttr
     }
 
     @Override
-    public List<T> search(String query,
-                          Map<String, String> mustConditions,
-                          Map<String, Integer> fields,
-                          String indexName,
-                          Class<T> searchEntityType) throws IOException {
+    public SearchResult<T> search(String query,
+                                  int pageNumber,
+                                  Map<String, String> mustConditions,
+                                  Map<String, Integer> fields,
+                                  String indexName,
+                                  Class<T> searchEntityType) throws IOException {
 
         List<Query> musts = new ArrayList<>();
         this.addMustConditions(musts, mustConditions);
 
         List<String> searchFields = new ArrayList<>();
-        fields.forEach((field, priority) -> searchFields.add(field + "^" + priority));
+        Map<String, HighlightField> highlightFields = new HashMap<>();
+        fields.forEach((field, priority) -> {
+            searchFields.add(field + "^" + priority);
+            highlightFields.put(field, HighlightField.of(hf -> hf.numberOfFragments(3)));
+        });
 
         SearchResponse<T> result = elasticsearchClient.search(s -> s
                         .index(indexName)
@@ -118,19 +129,23 @@ public class ElasticAdapter<T extends SearchableEntity, A extends SearchableAttr
                                             return b;
                                         }
                                 )
-                        ),
+                        )
+                        .highlight(Highlight.of(h -> h.type(HighlighterType.Unified)
+                                .fields(highlightFields)))
+                        .from(pageNumber),
                 searchEntityType
         );
 
-        return retrieveResults(result);
+        return retrieveResults(result, query);
     }
 
     @Override
-    public List<T> filter(Map<String, List<String>> filters,
-                          Map<String, String> mustConditions,
-                          Map<String, String> sortOptions,
-                          String indexName,
-                          Class<T> searchEntityType) throws IOException {
+    public SearchResult<T> filter(Map<String, List<String>> filters,
+                                  int pageNumber,
+                                  Map<String, String> mustConditions,
+                                  Map<String, String> sortOptions,
+                                  String indexName,
+                                  Class<T> searchEntityType) throws IOException {
 
         List<Query> criterias = new ArrayList<>();
         addFilterConditions(criterias, filters);
@@ -147,31 +162,35 @@ public class ElasticAdapter<T extends SearchableEntity, A extends SearchableAttr
                                                     return b;
                                                 }
                                         )
-                                ).sort(soList)
-                ,
+                                )
+                                .sort(soList)
+                                .from(pageNumber),
                 searchEntityType
         );
 
-        return retrieveResults(result);
+        return retrieveResults(result, null);
     }
 
     @Override
-    public List<T> searchFiltered(String query,
-                                  Map<String, List<String>> filters,
-                                  Map<String, String> mustConditions,
-                                  Map<String, Integer> fields,
-                                  Map<String, String> sortOptions,
-                                  String indexName,
-                                  Class<T> searchEntityType) throws IOException {
+    public SearchResult<T> searchFiltered(String query,
+                                          int pageNumber,
+                                          Map<String, List<String>> filters,
+                                          Map<String, String> mustConditions,
+                                          Map<String, Integer> fields,
+                                          String indexName,
+                                          Class<T> searchEntityType) throws IOException {
 
         List<Query> musts = new ArrayList<>();
         addMustConditions(musts, mustConditions);
         addFilterConditions(musts, filters);
 
         List<String> searchFields = new ArrayList<>();
-        fields.forEach((field, priority) -> searchFields.add(field + "^" + priority));
+        Map<String, HighlightField> highlightFields = new HashMap<>();
+        fields.forEach((field, priority) -> {
+            searchFields.add(field + "^" + priority);
+            highlightFields.put(field, HighlightField.of(hf -> hf.numberOfFragments(3)));
+        });
 
-        List<SortOptions> soList = buildSortOptions(sortOptions);
 
         SearchResponse<T> result = elasticsearchClient.search(s -> s
                         .index(indexName)
@@ -184,11 +203,14 @@ public class ElasticAdapter<T extends SearchableEntity, A extends SearchableAttr
                                             return b;
                                         }
                                 )
-                        ).sort(soList),
+                        )
+                        .highlight(Highlight.of(h -> h.type(HighlighterType.Unified)
+                                .fields(highlightFields)))
+                        .from(pageNumber),
                 searchEntityType
         );
 
-        return retrieveResults(result);
+        return retrieveResults(result, query);
     }
 
     private void addMustConditions(List<Query> conds, Map<String, String> mustConditions) {
@@ -230,14 +252,47 @@ public class ElasticAdapter<T extends SearchableEntity, A extends SearchableAttr
         return soList;
     }
 
-    private List<T> retrieveResults(SearchResponse<T> result) {
-        List<T> searchResults = new ArrayList<>();
+    private SearchResult<T> retrieveResults(SearchResponse<T> result, String query) {
+        List<T> resultItems = new ArrayList<>();
+        Map<String, Map<String, List<String>>> highlights = new HashMap<>();
 
-        result.hits().hits().forEach(hit -> searchResults.add(
-                hit.source()
-        ));
+        result.hits().hits().forEach(hit -> {
+                    resultItems.add(hit.source());
+                    if (!hit.highlight().isEmpty()) {
+                        highlights.put(hit.source().getIdField(), hit.highlight());
+                        if (highlights.get(hit.source().getIdField()).get("title") == null) {
+                            List<String> title = hit.highlight().get("title") != null
+                                    ? hit.highlight().get("title")
+                                    : List.of(hit.source().getTitle());
+                            highlights.get(hit.source().getIdField()).put("title", title);
+                        }
+                    }
+                }
+        );
+        return new SearchResult<>() {
+            @Override
+            public List<T> getResultItems() {
+                return resultItems;
+            }
 
-        return searchResults;
+            @Override
+            public Map<String, Map<String, List<String>>> getHighlights() {
+                return highlights;
+            }
+
+            @Override
+            public String getSearchResultsLink() {
+                if (query != null) {
+                    return "/search/" + URLEncoder.encode(query, StandardCharsets.UTF_8);
+                }
+                return null;
+            }
+
+            @Override
+            public long getResultsCount() {
+                return result.hits().total() != null ? result.hits().total().value() : 0;
+            }
+        };
     }
 
     private BulkRequest.Builder prepareBulkRequest(String indexName, List<T> entities) {
