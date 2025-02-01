@@ -2,6 +2,10 @@ package com.practice.jblog.Entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.practice.jblog.formatters.TimeStampDeserializer;
+import com.practice.jblog.formatters.TimeStampSerializer;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import org.hibernate.annotations.ColumnDefault;
@@ -51,11 +55,15 @@ public class Post implements SearchableEntity {
     @JsonFormat(pattern = "yyyy-mm-dd")
     @CreationTimestamp
     @Column(columnDefinition="TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @JsonSerialize(using = TimeStampSerializer.class)
+    @JsonDeserialize(using = TimeStampDeserializer.class)
     private Instant createdAt;
 
     @JsonFormat(pattern = "yyyy-mm-dd")
     @UpdateTimestamp
     @Column(columnDefinition="TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+    @JsonSerialize(using = TimeStampSerializer.class)
+    @JsonDeserialize(using = TimeStampDeserializer.class)
     private Instant updatedAt;
 
     @Transient
