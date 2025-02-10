@@ -15,6 +15,7 @@ import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Highlight;
 import co.elastic.clients.elasticsearch.core.search.HighlightField;
 import co.elastic.clients.elasticsearch.core.search.HighlighterType;
+import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
 import co.elastic.clients.transport.endpoints.BooleanResponse;
 import com.practice.jblog.Entity.SearchableAttribute;
 import com.practice.jblog.Entity.SearchableEntity;
@@ -46,9 +47,29 @@ public class ElasticAdapter<T extends SearchableEntity, A extends SearchableAttr
             elasticsearchClient.indices().delete(c -> c.index(indexName));
         }
 
-        elasticsearchClient.
-                indices()
-                .create(c -> c.index(indexName));
+        elasticsearchClient.indices().create(createIndexRequest(indexName));
+    }
+
+    private CreateIndexRequest createIndexRequest(String indexName) {
+        return new CreateIndexRequest.Builder()
+                .index(indexName)
+                .settings(s -> s
+                        .analysis(a -> a
+                                .analyzer("stemmer_analyzer", analyzer -> analyzer
+                                        .custom(ca -> ca
+                                                .tokenizer("standard")
+                                                .filter("lowercase", "english_stemmer")
+                                        )
+                                )
+                                .filter(
+                                        "english_stemmer", filter -> filter
+                                                .definition(n -> n.
+                                                        stemmer(stem -> stem.language("english"))
+                                                )
+                                )
+                        )
+                )
+                .build();
     }
 
     public boolean indexExists(String indexName) throws IOException {
@@ -59,19 +80,20 @@ public class ElasticAdapter<T extends SearchableEntity, A extends SearchableAttr
     }
 
     public void addFieldsMapping(String indexName, List<A> attributes) throws IOException {
-        elasticsearchClient.indices().putMapping(pm -> {
-                    pm.index(indexName);
+        elasticsearchClient.indices()
+                .putMapping(pm -> {
+                            pm.index(indexName);
 
-                    for (A attribute : attributes) {
-                        pm.properties(attribute.getCode(), prop -> prop
-                                .text(text -> text
-                                        .analyzer("standard")
-                                        .fields("keyword", keyword -> keyword.keyword(k -> k))
-                                ));
-                    }
-                    return pm;
-                }
-        );
+                            for (A attribute : attributes) {
+                                pm.properties(attribute.getCode(), prop -> prop
+                                        .text(text -> text
+                                                .analyzer("stemmer_analyzer")
+                                                .fields("keyword", keyword -> keyword.keyword(k -> k))
+                                        ));
+                            }
+                            return pm;
+                        }
+                );
     }
 
     @Transactional
@@ -122,9 +144,12 @@ public class ElasticAdapter<T extends SearchableEntity, A extends SearchableAttr
                                             b.must(musts);
                                             b.should(ss -> ss.
                                                     multiMatch(m -> m.query(
-                                                            request.getQuery()).fields(searchFields)
+                                                            request.getQuery())
+                                                            .fields(searchFields)
+                                                            .fuzziness("AUTO")
                                                     )
                                             );
+                                            b.minimumShouldMatch("100%");
                                             return b;
                                         }
                                 )
@@ -135,7 +160,7 @@ public class ElasticAdapter<T extends SearchableEntity, A extends SearchableAttr
                 request.getSearchEntityType()
         );
 
-        return retrieveResults(result, request.getQuery());
+        return retrieveResults(result, request.getQuery(), request.getPageNumber());
     }
 
     @Override
@@ -162,7 +187,7 @@ public class ElasticAdapter<T extends SearchableEntity, A extends SearchableAttr
                 request.getSearchEntityType()
         );
 
-        return retrieveResults(result, null);
+        return retrieveResults(result, null, request.getPageNumber());
     }
 
     @Override
@@ -187,9 +212,12 @@ public class ElasticAdapter<T extends SearchableEntity, A extends SearchableAttr
                                             b.must(musts);
                                             b.should(ss -> ss.
                                                     multiMatch(m
-                                                            -> m.query(request.getQuery()).fields(searchFields)
+                                                            -> m.query(request.getQuery())
+                                                            .fields(searchFields)
+                                                            .fuzziness("AUTO")
                                                     )
                                             );
+                                            b.minimumShouldMatch("100%");
                                             return b;
                                         }
                                 )
@@ -200,7 +228,7 @@ public class ElasticAdapter<T extends SearchableEntity, A extends SearchableAttr
                 request.getSearchEntityType()
         );
 
-        return retrieveResults(result, request.getQuery());
+        return retrieveResults(result, request.getQuery(), request.getPageNumber());
     }
 
     private void addMustConditions(List<Query> conds, Map<String, String> mustConditions) {
@@ -242,23 +270,29 @@ public class ElasticAdapter<T extends SearchableEntity, A extends SearchableAttr
         return soList;
     }
 
-    private SearchResult<T> retrieveResults(SearchResponse<T> result, String query) {
+    private SearchResult<T> retrieveResults(SearchResponse<T> result, String query, Integer pageNum) {
         List<T> resultItems = new ArrayList<>();
         Map<String, Map<String, List<String>>> highlights = new HashMap<>();
-
-        result.hits().hits().forEach(hit -> {
-                    resultItems.add(hit.source());
-                    if (!hit.highlight().isEmpty()) {
-                        highlights.put(hit.source().getIdField(), hit.highlight());
-                        if (highlights.get(hit.source().getIdField()).get("title") == null) {
-                            List<String> title = hit.highlight().get("title") != null
-                                    ? hit.highlight().get("title")
-                                    : List.of(hit.source().getTitle());
-                            highlights.get(hit.source().getIdField()).put("title", title);
+        long resCount = result.hits().total() != null ? result.hits().total().value() : 0;
+        long remainingCount = resCount - pageNum * 10;
+        if (remainingCount >= 10) {
+            result.hits().hits().forEach(hit -> {
+                        resultItems.add(hit.source());
+                        if (!hit.highlight().isEmpty()) {
+                            highlights.put(hit.source().getIdField(), hit.highlight());
                         }
                     }
-                }
-        );
+            );
+        } else {
+            result.hits().hits().subList(0, (int)remainingCount).forEach(hit -> {
+                        resultItems.add(hit.source());
+                        if (!hit.highlight().isEmpty()) {
+                            highlights.put(hit.source().getIdField(), hit.highlight());
+                        }
+                    }
+            );
+        }
+
         return new SearchResult<>() {
             @Override
             public List<T> getResultItems() {
@@ -273,14 +307,18 @@ public class ElasticAdapter<T extends SearchableEntity, A extends SearchableAttr
             @Override
             public String getSearchResultsLink() {
                 if (query != null) {
-                    return "/search/" + URLEncoder.encode(query, StandardCharsets.UTF_8);
+                    String url = "/search/" + URLEncoder.encode(query, StandardCharsets.UTF_8);
+                    if (pageNum != null && pageNum != 0) {
+                        url += "/" + (pageNum + 1);
+                    }
+                    return url;
                 }
                 return null;
             }
 
             @Override
             public long getResultsCount() {
-                return result.hits().total() != null ? result.hits().total().value() : 0;
+                return resCount;
             }
         };
     }

@@ -1,24 +1,27 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import "./App.css";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import { Search } from "./components/Search";
+import { BrowserRouter, Route, Router, Routes } from "react-router-dom";
+import { PostPage } from "./views/PostPage";
+import { SearchResultPage } from "./views/SearchResultPage";
 
 function App() {
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <Search />
+      <div className="container content">
+        <BrowserRouter>
+          <Routes>
+            <Route path="/:urlKey" element={<PostPage />}></Route>
+            <Route path="/search/:query" element={<SearchResultPage />}></Route>
+            {/* <Route
+              path="/search/:query/:p"
+              element={<SearchResultPage />}
+            ></Route> */}
+          </Routes>
+        </BrowserRouter>
+      </div>
     </div>
   );
 }
