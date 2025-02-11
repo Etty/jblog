@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@testing-library/react": "^16.2.0",
     "@types/bootstrap": "^5.2.10",
     "axios": "^1.7.9",
     "bootstrap": "^5.3.3",
@@ -41,11 +42,14 @@
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@faker-js/faker": "^9.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
     "@types/he": "^1.2.3",
     "@types/jest": "^29.5.14",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "@types/react-router-dom": "^5.3.3",
+    "@types/testing-library__jest-dom": "^5.14.9",
     "ts-loader": "^9.5.2",
     "typescript": "^4.9.5"
   }

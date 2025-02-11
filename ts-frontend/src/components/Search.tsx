@@ -73,7 +73,7 @@ export const Search = () => {
     setActiveSuggestion(value + 1);
   };
 
-  function handleClick() {
+  const handleClick = () => {
     if (suggestions[activeSuggestion - 1]) {
       window.location.replace("/" + suggestions[activeSuggestion - 1].urlKey);
     } else {
@@ -82,7 +82,7 @@ export const Search = () => {
 
     setIsOpened(false);
     setActiveSuggestion(0);
-  }
+  };
 
   function handleSubmit(_event: React.FormEvent<SearchFormElement>) {
     _event.preventDefault();
@@ -94,25 +94,21 @@ export const Search = () => {
     }
   }
 
-  const clickOutsideHandler = new OnClickOutsideHandler(
-    document.getElementById("searchQuery")!,
-    () => {
-      setIsOpened(false);
-      setActiveSuggestion(0);
-    }
-  );
-
   useEffect(() => {
-    document
-      .querySelectorAll(".searchresult-item")
-      .forEach((elStaticParent) => {
-        elStaticParent.addEventListener("click", (evt) => handleClick());
-      });
-    console.log(document.querySelectorAll(".searchresult-item"));
+    const clickOutsideHandler = new OnClickOutsideHandler(
+      document.getElementById("search-container")!,
+      () => {
+        setIsOpened(false);
+        setActiveSuggestion(0);
+      }
+    );
   }, [searchResult]);
 
   return (
-    <div className="container col-12 col-md-12">
+    <div
+      className="container col-12 col-md-12 search-container"
+      id="search-container"
+    >
       <form autoComplete="off" className="d-flex" onSubmit={handleSubmit}>
         <div className="autocomplete col-sm-11 col-11">
           <input
@@ -132,6 +128,7 @@ export const Search = () => {
           Go
         </button>
       </form>
+
       {isOpened ? (
         <Card>
           <Card.Body style={{ padding: "0" }}>
@@ -155,7 +152,7 @@ export const Search = () => {
                           ? "autocomplete-active"
                           : ""
                       }`}
-                      // onClick={handleClick}
+                      onClick={() => handleClick()}
                       onMouseEnter={() => handleMouseMove(index)}
                     >
                       <Col className="border-bottom">
@@ -209,7 +206,7 @@ export const Search = () => {
                       ? "autocomplete-active"
                       : ""
                   }`}
-                  // onClick={handleClick}
+                  onClick={() => handleClick()}
                   onMouseEnter={() => handleMouseMove(suggestions.length + 1)}
                 >
                   <Col>

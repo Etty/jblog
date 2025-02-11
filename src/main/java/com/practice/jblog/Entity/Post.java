@@ -73,56 +73,63 @@ public class Post implements SearchableEntity {
         return id;
     }
 
-    public void setId(Long id) {
+    public Post setId(Long id) {
         this.id = id;
+        return this;
     }
 
     public byte getIsEnabled() {
         return isEnabled;
     }
 
-    public void setIsEnabled(byte isEnabled) {
+    public Post setIsEnabled(byte isEnabled) {
         this.isEnabled = isEnabled;
+        return this;
     }
 
     public String getPostIdentifier() {
         return postIdentifier;
     }
 
-    public void setPostIdentifier(String postIdentifier) {
+    public Post setPostIdentifier(String postIdentifier) {
         this.postIdentifier = postIdentifier;
+        return this;
     }
 
     public String getTitle() {
         return title;
     }
 
-    public void setTitle(String title) {
+    public Post setTitle(String title) {
         this.title = title;
+        return this;
     }
 
     public String getImage() {
         return image;
     }
 
-    public void setImage(String image) {
+    public Post setImage(String image) {
         this.image = image;
+        return this;
     }
 
     public String getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
+    public Post setDescription(String description) {
         this.description = description;
+        return this;
     }
 
     public String getUrlKey() {
         return urlKey;
     }
 
-    public void setUrlKey(String urlKey) {
+    public Post setUrlKey(String urlKey) {
         this.urlKey = urlKey;
+        return this;
     }
 
     public Set<Category> getCategories() {
@@ -142,24 +149,27 @@ public class Post implements SearchableEntity {
         return categoryIds;
     }
 
-    public void setCategories(Set<Category> categories) {
+    public Post setCategories(Set<Category> categories) {
         this.categories = categories;
+        return this;
     }
 
     public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Instant createdAt) {
+    public Post setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+        return this;
     }
 
     public Instant getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(Instant updatedAt) {
+    public Post setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+        return this;
     }
 
     @Override
