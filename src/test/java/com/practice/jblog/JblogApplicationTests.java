@@ -8,6 +8,7 @@ class JblogApplicationTests {
 
 	@Test
 	void contextLoads() {
+//		Spring Initializr generated file
 	}
 
 }

@@ -32,7 +32,7 @@ class PostRepositoryTest {
     }
 
     @Test
-    void testGetEntityByUrlKey() throws Exception {
+    void testGetEntityByUrlKey() {
         String urlKey = "test-post";
         Post found = postRepository.findByUrlKey(urlKey);
 
