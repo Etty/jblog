@@ -1,6 +1,6 @@
 package com.practice.jblog.dto.search;
 
-import com.practice.jblog.Entity.SearchableEntity;
+import com.practice.jblog.entity.SearchableEntity;
 
 import java.util.List;
 import java.util.Map;

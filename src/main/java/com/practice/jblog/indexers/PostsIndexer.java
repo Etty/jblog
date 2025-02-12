@@ -1,8 +1,8 @@
 package com.practice.jblog.indexers;
 
-import com.practice.jblog.Entity.Post;
-import com.practice.jblog.Entity.PostAttributeDefinition;
-import com.practice.jblog.Repository.PostRepository;
+import com.practice.jblog.entity.Post;
+import com.practice.jblog.entity.PostAttributeDefinition;
+import com.practice.jblog.repository.PostRepository;
 import com.practice.jblog.config.IndexPrefix;
 import com.practice.jblog.adapters.ElasticAdapter;
 import com.practice.jblog.service.PostAttributesService;
@@ -15,17 +15,26 @@ import java.util.Optional;
 
 @Component
 public class PostsIndexer implements Indexer {
-    @Autowired
     private IndexPrefix indexPrefix;
 
-    @Autowired
     private ElasticAdapter<Post, PostAttributeDefinition> elasticAdapter;
 
-    @Autowired
     private PostRepository postRepository;
 
-    @Autowired
     private PostAttributesService postAttributesService;
+
+    @Autowired
+    public PostsIndexer(
+            IndexPrefix indexPrefix,
+            ElasticAdapter<Post, PostAttributeDefinition> elasticAdapter,
+            PostRepository postRepository,
+            PostAttributesService postAttributesService) {
+
+        this.indexPrefix = indexPrefix;
+        this.elasticAdapter = elasticAdapter;
+        this.postRepository = postRepository;
+        this.postAttributesService = postAttributesService;
+    }
 
     @Transactional
     @Override

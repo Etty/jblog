@@ -1,4 +1,4 @@
-package com.practice.jblog.Entity;
+package com.practice.jblog.entity;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.ColumnDefault;

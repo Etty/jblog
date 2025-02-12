@@ -1,7 +1,7 @@
 package com.practice.jblog;
 
-import com.practice.jblog.Entity.Post;
-import com.practice.jblog.Repository.PostRepository;
+import com.practice.jblog.entity.Post;
+import com.practice.jblog.repository.PostRepository;
 import com.practice.jblog.controller.PostController;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.hamcrest.Matchers.containsString;
 
 @WebMvcTest(PostController.class)
-public class FetchPostTest {
+class FetchPostTest {
     @Autowired
     private MockMvc mockMvc;
 

@@ -1,7 +1,6 @@
-package com.practice.jblog.Entity;
+package com.practice.jblog.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.practice.jblog.formatters.TimeStampDeserializer;
@@ -13,16 +12,15 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Entity
 @Table(indexes = {
-        @Index(name = "POST_TITLE", columnList = "title")
+        @Index(name = "CATEGORY_TITLE", columnList = "title"),
+        @Index(name = "CATEGORY_PARENT_ID", columnList = "parent_id")
 })
-public class Post implements SearchableEntity {
+public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -31,9 +29,9 @@ public class Post implements SearchableEntity {
     private byte isEnabled;
 
     @Column(unique = true, updatable = false)
-    private String postIdentifier;
+    private String categoryIdentifier;
 
-    @NotBlank(message = "Post title cannot be blank")
+    @NotBlank(message = "Category title cannot be blank")
     private String title;
 
     private String image;
@@ -44,13 +42,16 @@ public class Post implements SearchableEntity {
     @Column(unique = true)
     private String urlKey;
 
-    @ManyToMany
-    @JoinTable(
-            name = "category_post",
-            joinColumns = @JoinColumn(name = "post_id"),
-            inverseJoinColumns = @JoinColumn(name = "category_id"))
-    @JsonIgnore
-    private Set<Category> categories;
+    private String categoryPath;
+
+    /**
+     * ID of parent category
+     */
+    @ColumnDefault("0")
+    private long parentId;
+
+    @ManyToMany(mappedBy = "categories")
+    private Set<Post> posts;
 
     @JsonFormat(pattern = "yyyy-mm-dd")
     @CreationTimestamp
@@ -66,14 +67,11 @@ public class Post implements SearchableEntity {
     @JsonDeserialize(using = TimeStampDeserializer.class)
     private Instant updatedAt;
 
-    @Transient
-    List<String> categoryIds = null;
-
     public Long getId() {
         return id;
     }
 
-    public Post setId(Long id) {
+    public Category setId(Long id) {
         this.id = id;
         return this;
     }
@@ -82,17 +80,17 @@ public class Post implements SearchableEntity {
         return isEnabled;
     }
 
-    public Post setIsEnabled(byte isEnabled) {
+    public Category setIsEnabled(byte isEnabled) {
         this.isEnabled = isEnabled;
         return this;
     }
 
-    public String getPostIdentifier() {
-        return postIdentifier;
+    public String getCategoryIdentifier() {
+        return categoryIdentifier;
     }
 
-    public Post setPostIdentifier(String postIdentifier) {
-        this.postIdentifier = postIdentifier;
+    public Category setCategoryIdentifier(String categoryIdentifier) {
+        this.categoryIdentifier = categoryIdentifier;
         return this;
     }
 
@@ -100,7 +98,7 @@ public class Post implements SearchableEntity {
         return title;
     }
 
-    public Post setTitle(String title) {
+    public Category setTitle(String title) {
         this.title = title;
         return this;
     }
@@ -109,7 +107,7 @@ public class Post implements SearchableEntity {
         return image;
     }
 
-    public Post setImage(String image) {
+    public Category setImage(String image) {
         this.image = image;
         return this;
     }
@@ -118,7 +116,7 @@ public class Post implements SearchableEntity {
         return description;
     }
 
-    public Post setDescription(String description) {
+    public Category setDescription(String description) {
         this.description = description;
         return this;
     }
@@ -127,30 +125,35 @@ public class Post implements SearchableEntity {
         return urlKey;
     }
 
-    public Post setUrlKey(String urlKey) {
+    public Category setUrlKey(String urlKey) {
         this.urlKey = urlKey;
         return this;
     }
 
-    public Set<Category> getCategories() {
-        return categories;
+    public String getCategoryPath() {
+        return categoryPath;
     }
 
-    public List<String> getCategoryIds() {
-        if (categoryIds != null) {return categoryIds;}
-
-        if (categories == null || categories.isEmpty()) {
-            return List.of();
-        }
-        categoryIds = categories.stream()
-                .map(Category::getCategoryIdentifier)
-                .collect(Collectors.toList());
-
-        return categoryIds;
+    public Category setCategoryPath(String categoryPath) {
+        this.categoryPath = categoryPath;
+        return this;
     }
 
-    public Post setCategories(Set<Category> categories) {
-        this.categories = categories;
+    public long getParentId() {
+        return parentId;
+    }
+
+    public Category setParentId(long parentId) {
+        this.parentId = parentId;
+        return this;
+    }
+
+    public Set<Post> getPosts() {
+        return new HashSet<>(posts);
+    }
+
+    public Category setPosts(Set<Post> posts) {
+        this.posts = posts;
         return this;
     }
 
@@ -158,7 +161,7 @@ public class Post implements SearchableEntity {
         return createdAt;
     }
 
-    public Post setCreatedAt(Instant createdAt) {
+    public Category setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
         return this;
     }
@@ -167,14 +170,8 @@ public class Post implements SearchableEntity {
         return updatedAt;
     }
 
-    public Post setUpdatedAt(Instant updatedAt) {
+    public Category setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
         return this;
-    }
-
-    @Override
-    @JsonIgnore
-    public String getIdField() {
-        return postIdentifier;
     }
 }

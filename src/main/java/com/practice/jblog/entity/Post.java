@@ -1,6 +1,7 @@
-package com.practice.jblog.Entity;
+package com.practice.jblog.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.practice.jblog.formatters.TimeStampDeserializer;
@@ -12,25 +13,29 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
 @Table(indexes = {
-        @Index(name = "CATEGORY_TITLE", columnList = "title"),
-        @Index(name = "CATEGORY_PARENT_ID", columnList = "parent_id")
+        @Index(name = "POST_TITLE", columnList = "title")
 })
-public class Category {
+public class Post implements SearchableEntity {
+    public static final String IS_ENABLED_FIELD = "isEnabled";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "isEnabled")
     @ColumnDefault("1")
     private byte isEnabled;
 
     @Column(unique = true, updatable = false)
-    private String categoryIdentifier;
+    private String postIdentifier;
 
-    @NotBlank(message = "Category title cannot be blank")
+    @NotBlank(message = "Post title cannot be blank")
     private String title;
 
     private String image;
@@ -41,16 +46,13 @@ public class Category {
     @Column(unique = true)
     private String urlKey;
 
-    private String categoryPath;
-
-    /**
-     * ID of parent category
-     */
-    @ColumnDefault("0")
-    private long parentId;
-
-    @ManyToMany(mappedBy = "categories")
-    private Set<Post> posts;
+    @ManyToMany
+    @JoinTable(
+            name = "category_post",
+            joinColumns = @JoinColumn(name = "post_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id"))
+    @JsonIgnore
+    private Set<Category> categories;
 
     @JsonFormat(pattern = "yyyy-mm-dd")
     @CreationTimestamp
@@ -66,99 +68,114 @@ public class Category {
     @JsonDeserialize(using = TimeStampDeserializer.class)
     private Instant updatedAt;
 
+    @Transient
+    List<String> categoryIds = null;
+
     public Long getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public Post setId(Long id) {
         this.id = id;
+        return this;
     }
 
     public byte getIsEnabled() {
         return isEnabled;
     }
 
-    public void setIsEnabled(byte isEnabled) {
+    public Post setIsEnabled(byte isEnabled) {
         this.isEnabled = isEnabled;
+        return this;
     }
 
-    public String getCategoryIdentifier() {
-        return categoryIdentifier;
+    public String getPostIdentifier() {
+        return postIdentifier;
     }
 
-    public void setCategoryIdentifier(String categoryIdentifier) {
-        this.categoryIdentifier = categoryIdentifier;
+    public Post setPostIdentifier(String postIdentifier) {
+        this.postIdentifier = postIdentifier;
+        return this;
     }
 
     public String getTitle() {
         return title;
     }
 
-    public void setTitle(String title) {
+    public Post setTitle(String title) {
         this.title = title;
+        return this;
     }
 
     public String getImage() {
         return image;
     }
 
-    public void setImage(String image) {
+    public Post setImage(String image) {
         this.image = image;
+        return this;
     }
 
     public String getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
+    public Post setDescription(String description) {
         this.description = description;
+        return this;
     }
 
     public String getUrlKey() {
         return urlKey;
     }
 
-    public void setUrlKey(String urlKey) {
+    public Post setUrlKey(String urlKey) {
         this.urlKey = urlKey;
+        return this;
     }
 
-    public String getCategoryPath() {
-        return categoryPath;
+    public Set<Category> getCategories() {
+        return new HashSet<>(categories);
     }
 
-    public void setCategoryPath(String categoryPath) {
-        this.categoryPath = categoryPath;
+    public List<String> getCategoryIds() {
+        if (categoryIds != null) {return categoryIds;}
+
+        if (categories == null || categories.isEmpty()) {
+            return List.of();
+        }
+        categoryIds = categories.stream()
+                .map(Category::getCategoryIdentifier).toList();
+
+        return categoryIds;
     }
 
-    public long getParentId() {
-        return parentId;
-    }
-
-    public void setParentId(long parentId) {
-        this.parentId = parentId;
-    }
-
-    public Set<Post> getPosts() {
-        return posts;
-    }
-
-    public void setPosts(Set<Post> posts) {
-        this.posts = posts;
+    public Post setCategories(Set<Category> categories) {
+        this.categories = categories;
+        return this;
     }
 
     public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Instant createdAt) {
+    public Post setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+        return this;
     }
 
     public Instant getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(Instant updatedAt) {
+    public Post setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+        return this;
+    }
+
+    @Override
+    @JsonIgnore
+    public String getIdField() {
+        return getPostIdentifier();
     }
 }

@@ -1,7 +1,7 @@
 package com.practice.jblog.adapters;
 
-import com.practice.jblog.Entity.SearchableAttribute;
-import com.practice.jblog.Entity.SearchableEntity;
+import com.practice.jblog.entity.SearchableAttribute;
+import com.practice.jblog.entity.SearchableEntity;
 import com.practice.jblog.dto.search.FilterRequest;
 import com.practice.jblog.dto.search.SearchFilteredRequest;
 import com.practice.jblog.dto.search.SearchRequest;
@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 public interface SearchAdapter<T extends SearchableEntity, A extends SearchableAttribute> {
     @Transactional

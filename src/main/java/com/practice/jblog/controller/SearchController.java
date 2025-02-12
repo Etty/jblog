@@ -14,8 +14,12 @@ import java.util.Map;
 @RequestMapping("/search")
 @CrossOrigin("${frontend.origin}")
 public class SearchController {
-    @Autowired
     private ElasticSearcher searcher;
+
+    @Autowired
+    public SearchController(ElasticSearcher searcher) {
+        this.searcher = searcher;
+    }
 
     @GetMapping("/{q}")
     public ResponseEntity<?> getSearchResult(@PathVariable String q) {

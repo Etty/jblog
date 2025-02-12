@@ -1,7 +1,7 @@
 package com.practice.jblog.service;
 
-import com.practice.jblog.Entity.Post;
-import com.practice.jblog.Entity.PostAttributeDefinition;
+import com.practice.jblog.entity.Post;
+import com.practice.jblog.entity.PostAttributeDefinition;
 import com.practice.jblog.adapters.ElasticAdapter;
 import com.practice.jblog.dto.search.FilterRequest;
 import com.practice.jblog.dto.search.SearchFilteredRequest;
@@ -10,6 +10,7 @@ import com.practice.jblog.dto.search.SearchResult;
 import com.practice.jblog.indexers.PostsIndexer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import static com.practice.jblog.entity.Post.*;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -18,18 +19,25 @@ import java.util.Map;
 
 @Service
 public class ElasticSearcher {
-    @Autowired
     private ElasticAdapter<Post, PostAttributeDefinition> elasticAdapter;
 
-    @Autowired
     private PostsIndexer postsIndexer;
 
-    @Autowired
     private PostAttributesService postAttributesService;
+
+    @Autowired
+    public ElasticSearcher (
+            ElasticAdapter<Post, PostAttributeDefinition> elasticAdapter,
+            PostsIndexer postsIndexer,
+            PostAttributesService postAttributesService) {
+        this.elasticAdapter = elasticAdapter;
+        this.postsIndexer = postsIndexer;
+        this.postAttributesService = postAttributesService;
+    }
 
     public SearchResult<Post> search(String query, int pageNum) throws IOException {
         HashMap<String, String> musts = new HashMap<>();
-        musts.put("isEnabled", "1");
+        musts.put(IS_ENABLED_FIELD, "1");
         HashMap<String, Integer> fields = new HashMap<>();
         List<PostAttributeDefinition> searchableAttrs = postAttributesService.getSearchableAttributes();
         for (PostAttributeDefinition attr : searchableAttrs) {
@@ -75,7 +83,7 @@ public class ElasticSearcher {
 
     public SearchResult<Post> filter(Map<String, List<String>> filters, int pageNum) throws IOException {
         HashMap<String, String> musts = new HashMap<>();
-        musts.put("isEnabled", "1");
+        musts.put(IS_ENABLED_FIELD, "1");
         HashMap<String, String> so = new HashMap<>();
         so.put("id", "desc");
 
@@ -121,7 +129,7 @@ public class ElasticSearcher {
                                              int pageNum) throws IOException {
 
         HashMap<String, String> musts = new HashMap<>();
-        musts.put("isEnabled", "1");
+        musts.put(IS_ENABLED_FIELD, "1");
         HashMap<String, Integer> fields = new HashMap<>();
         List<PostAttributeDefinition> searchableAttrs = postAttributesService.getSearchableAttributes();
         for (PostAttributeDefinition attr : searchableAttrs) {

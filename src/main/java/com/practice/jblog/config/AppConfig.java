@@ -14,45 +14,42 @@ import org.apache.http.message.BasicHeader;
 import org.elasticsearch.client.RestClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.net.ssl.SSLContext;
-import java.io.File;
-import java.io.IOException;
 
 @Configuration
 @PropertySource("classpath:env.properties")
 @EnableTransactionManagement
 public class AppConfig {
     @Value("${elastic.host}")
-    private String elastic_host;
+    private String elasticHost;
 
     @Value("${elastic.port}")
-    private int elastic_port;
+    private int elasticPort;
 
     @Value("${elastic.security_enabled}")
-    private boolean elastic_security_enabled;
+    private boolean elasticSecurityEnabled;
 
     @Value("${elastic.cert_fingerprint}")
-    private String elastic_cert_fingerprint;
+    private String elasticCertFingerprint;
 
     @Value("${elastic.api_key}")
-    private String elastic_api_key;
+    private String elasticApiKey;
 
     @Value("${elastic.user}")
-    private String elastic_user;
+    private String elasticUser;
 
     @Value("${elastic.password}")
-    private String elastic_password;
+    private String elasticPassword;
 
 
 
     @Bean
     public ElasticsearchClient elasticsearchClient() {
-        if (elastic_security_enabled) {
+        if (elasticSecurityEnabled) {
             return getEsClientSecure();
         } else {
             return getEsClient();
@@ -60,8 +57,8 @@ public class AppConfig {
     }
 
     private ElasticsearchClient getEsClient() {
-        String serverUrl = "http://" + elastic_host + ":" + elastic_port;
-        String apiKey = elastic_api_key;
+        String serverUrl = "http://" + elasticHost + ":" + elasticPort;
+        String apiKey = elasticApiKey;
 
         RestClient restClient = RestClient
                 .builder(HttpHost.create(serverUrl))
@@ -72,22 +69,20 @@ public class AppConfig {
 
         ElasticsearchTransport transport = new RestClientTransport(
                 restClient, new JacksonJsonpMapper());
-        ElasticsearchClient esClient = new ElasticsearchClient(transport);
-
-        return esClient;
+        return new ElasticsearchClient(transport);
     }
 
     private ElasticsearchClient getEsClientSecure() {
         SSLContext sslContext = TransportUtils
-                .sslContextFromCaFingerprint(elastic_cert_fingerprint);
+                .sslContextFromCaFingerprint(elasticCertFingerprint);
 
         BasicCredentialsProvider credsProv = new BasicCredentialsProvider();
         credsProv.setCredentials(
-                AuthScope.ANY, new UsernamePasswordCredentials(elastic_user, elastic_password)
+                AuthScope.ANY, new UsernamePasswordCredentials(elasticUser, elasticPassword)
         );
 
         RestClient restClient = RestClient
-                .builder(new HttpHost(elastic_host, elastic_port, "https"))
+                .builder(new HttpHost(elasticHost, elasticPort, "https"))
                 .setHttpClientConfigCallback(hc -> hc
                         .setSSLContext(sslContext)
                         .setDefaultCredentialsProvider(credsProv)
@@ -95,7 +90,7 @@ public class AppConfig {
                 .build();
 
         ElasticsearchTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper());
-        ElasticsearchClient esClient = new ElasticsearchClient(transport);
-        return esClient;
+
+        return new ElasticsearchClient(transport);
     }
 }

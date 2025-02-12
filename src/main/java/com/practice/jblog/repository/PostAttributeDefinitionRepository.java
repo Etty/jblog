@@ -1,6 +1,6 @@
-package com.practice.jblog.Repository;
+package com.practice.jblog.repository;
 
-import com.practice.jblog.Entity.PostAttributeDefinition;
+import com.practice.jblog.entity.PostAttributeDefinition;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 

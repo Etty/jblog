@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
+import java.util.logging.Logger;
 
 public class TimeStampDeserializer extends JsonDeserializer<Instant> {
     @Override
@@ -16,7 +17,8 @@ public class TimeStampDeserializer extends JsonDeserializer<Instant> {
         try {
             return Instant.parse(str);
         } catch (DateTimeParseException e) {
-            System.err.println(e);
+            Logger logger = Logger.getLogger(getClass().getName());
+            logger.info(e.getMessage());
             return null;
         }
     }

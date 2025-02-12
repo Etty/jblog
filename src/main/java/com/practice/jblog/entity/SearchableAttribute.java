@@ -1,4 +1,4 @@
-package com.practice.jblog.Entity;
+package com.practice.jblog.entity;
 
 public interface SearchableAttribute {
     String getCode();

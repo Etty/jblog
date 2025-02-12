@@ -1,7 +1,7 @@
 package com.practice.jblog;
 
-import com.practice.jblog.Entity.Post;
-import com.practice.jblog.Repository.PostRepository;
+import com.practice.jblog.entity.Post;
+import com.practice.jblog.repository.PostRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DataJpaTest
 @TestPropertySource(locations = { "classpath:application.properties" })
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-public class PostRepositoryTest {
+class PostRepositoryTest {
     @Autowired
     private TestEntityManager entityManager;
 

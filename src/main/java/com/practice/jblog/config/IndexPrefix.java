@@ -6,9 +6,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class IndexPrefix {
     @Value("${elastic.index_prefix}")
-    private String posts_index_name;
+    private String postsIndexName;
 
     public String getPrefix() {
-        return posts_index_name;
+        return postsIndexName;
     }
 }

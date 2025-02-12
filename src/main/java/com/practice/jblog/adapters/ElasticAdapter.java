@@ -10,15 +10,14 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
-import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Highlight;
 import co.elastic.clients.elasticsearch.core.search.HighlightField;
 import co.elastic.clients.elasticsearch.core.search.HighlighterType;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
 import co.elastic.clients.transport.endpoints.BooleanResponse;
-import com.practice.jblog.Entity.SearchableAttribute;
-import com.practice.jblog.Entity.SearchableEntity;
+import com.practice.jblog.entity.SearchableAttribute;
+import com.practice.jblog.entity.SearchableEntity;
 
 import com.practice.jblog.dto.search.FilterRequest;
 import com.practice.jblog.dto.search.SearchFilteredRequest;
@@ -37,9 +36,12 @@ import java.util.*;
 @Service
 public class ElasticAdapter<T extends SearchableEntity, A extends SearchableAttribute>
         implements DisposableBean, SearchAdapter<T, A> {
+    private ElasticsearchClient elasticsearchClient;
 
     @Autowired
-    private ElasticsearchClient elasticsearchClient;
+    public ElasticAdapter(ElasticsearchClient elasticsearchClient) {
+        this.elasticsearchClient = elasticsearchClient;
+    }
 
     public void addIndex(String indexName) throws IOException {
         boolean indexExists = indexExists(indexName);
@@ -104,14 +106,14 @@ public class ElasticAdapter<T extends SearchableEntity, A extends SearchableAttr
 
         BulkRequest.Builder br = prepareBulkRequest(indexName, collection);
 
-        BulkResponse result = elasticsearchClient.bulk(br.build());
+        elasticsearchClient.bulk(br.build());
     }
 
     @Transactional
     @Override
     public void reindexRecords(String indexName, List<T> collection) throws IOException {
         BulkRequest.Builder br = prepareBulkRequest(indexName, collection);
-        BulkResponse result = elasticsearchClient.bulk(br.build());
+        elasticsearchClient.bulk(br.build());
     }
 
     @Transactional
@@ -307,11 +309,8 @@ public class ElasticAdapter<T extends SearchableEntity, A extends SearchableAttr
             @Override
             public String getSearchResultsLink() {
                 if (query != null) {
-                    String url = "/search/" + URLEncoder.encode(query, StandardCharsets.UTF_8);
-                    if (pageNum != null && pageNum != 0) {
-                        url += "/" + (pageNum + 1);
-                    }
-                    return url;
+                    return "/search/" + URLEncoder.encode(query, StandardCharsets.UTF_8)
+                            + ((pageNum != null && pageNum != 0) ? "/" + (pageNum + 1) : "");
                 }
                 return null;
             }
