@@ -50,7 +50,8 @@ public class Post implements SearchableEntity {
     @JoinTable(
             name = "category_post",
             joinColumns = @JoinColumn(name = "post_id"),
-            inverseJoinColumns = @JoinColumn(name = "category_id"))
+            inverseJoinColumns = @JoinColumn(name = "category_id"),
+            uniqueConstraints = @UniqueConstraint(columnNames = {"post_id", "category_id"}))
     @JsonIgnore
     private Set<Category> categories;
 
